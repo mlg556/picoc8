@@ -1,5 +1,7 @@
 #pragma once
 
+// https://gist.github.com/giulioz/7db0ba036e3ea654545074f6b2975f8d
+
 /*
   A simple SDL2-based framebuffer for graphics programming.
   (Giulio Zausa, 2019)
@@ -24,17 +26,15 @@
 #include <SDL2/SDL.h>
 
 template <size_t width, size_t height>
-class BufferWindow
-{
-
-public:
+class BufferWindow {
+   public:
     uint32_t *pixels;
+    uint64_t last = SDL_GetPerformanceCounter();
     SDL_Window *window;
     SDL_Surface *screenSurface;
     SDL_PixelFormat *fmt;
 
-    BufferWindow()
-    {
+    BufferWindow() {
         if (SDL_Init(SDL_INIT_VIDEO) < 0) {
             printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         } else {
@@ -50,14 +50,12 @@ public:
         }
     }
 
-    ~BufferWindow()
-    {
+    ~BufferWindow() {
         SDL_DestroyWindow(window);
         SDL_Quit();
     }
 
-    auto handle_keys()
-    {
+    auto handle_keys() {
         SDL_Event e;
         // int keysPointer = 0;
         while (SDL_PollEvent(&e) != 0) {
@@ -69,10 +67,17 @@ public:
         return false;
     }
 
+    auto getDeltaTime() {
+        auto now = SDL_GetPerformanceCounter();
+        auto dt =
+            (double)((now - last) * 1000 / (double)SDL_GetPerformanceFrequency());
+        last = now;
+        return dt;
+    }
+
     void startDraw() { SDL_LockSurface(screenSurface); }
 
-    void endDraw()
-    {
+    void endDraw() {
         SDL_UnlockSurface(screenSurface);
         SDL_UpdateWindowSurface(window);
     }
