@@ -6,6 +6,26 @@ const uint16_t RED = 0xf800;
 const uint16_t BLUE = 0x001f;
 const uint16_t GREEN = 0x07e0;
 
+// pico8 palette. converted from 24 to 16 bits
+const uint16_t fbuf_palette[16] = {
+    0x0000,
+    0x194a,
+    0x792a,
+    0x042a,
+    0xaa86,
+    0x5aa9,
+    0xc618,
+    0xff9d,
+    0xf809,
+    0xfd00,
+    0xff64,
+    0x0726,
+    0x2d7f,
+    0x83b3,
+    0xfbb5,
+    0xfe75,
+};
+
 // the FrameBuffer struct holds a pointer to the allocated buffer
 // and w/h info, which is used in drawing methods.
 typedef struct FrameBuffer {

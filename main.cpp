@@ -31,12 +31,15 @@ uint32_t convert_color(uint16_t color) {
 int main(int argc, char *args[]) {
     // main loop
     while (!wnd.handle_keys()) {
-        fbuf_cls(&fbuf, BLACK);
-        // x, y
-        fbuf_line(&fbuf, 10, 10, 20, 10, GREEN);
-        fbuf_line(&fbuf, 10, 10, 10, 20, RED);
+        for (int i = 0; i < 16; i++) {
+            fbuf_rect(&fbuf, 0, 8 * i, 128, 8, fbuf_palette[i]);
+        }
 
-        // fbuf_fillcircle(fbuf, frame_count % W, (frame_count / 2) % H, 10, BLACK);
+        // x, y
+        // fbuf_line(&fbuf, 10, 10, 20, 10, fbuf_palette[8]);
+        // fbuf_line(&fbuf, 10, 10, 10, 20, fbuf_palette[11]);
+
+        // fbuf_circ(&fbuf, 40, 40, 10, fbuf_palette[10]);
 
         // convert from framebuf to display
         wnd.startDraw();
