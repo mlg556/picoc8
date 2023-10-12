@@ -1,21 +1,26 @@
 #include <SDL2/SDL.h>
 #include <stdio.h>
 
-#include "buffer.hpp"
-#include "lib/framebuf/framebuf.h"
+// #include "buffer.hpp"
+#include <string>
+using namespace std;
+
+#include "framebuf.h"
 // #include "sprite.c"
-
-const int W = 128;
-const int H = 128;
-
-const int WH = 128 * 128;
 
 uint16_t buf[WH];
 
-FrameBuffer fbuf = {.buf = buf, .w = W, .h = H};
+FrameBuffer fbuf = {buf};
 
-BufferWindow<W, H> wnd = BufferWindow<W, H>();
-SDL_PixelFormat *fmt = wnd.screenSurface->format;
+SDL_Window *window;
+SDL_Surface *screen_surface;
+SDL_Event event;
+uint32_t *pixels;
+SDL_PixelFormat *format;
+
+bool running = true;
+
+const char *key_name;
 
 uint32_t frame_count = 0;
 
@@ -25,32 +30,122 @@ uint32_t convert_color(uint16_t color) {
     g = (color & 0x07E0) >> 3;
     b = (color & 0x1F) << 3;
 
-    return SDL_MapRGB(fmt, r, g, b);
+    return SDL_MapRGB(format, r, g, b);
 }
 
+class Ship {
+   public:
+    int x, y, vx, vy;
+    Ship() {
+        x = W / 2;
+        y = H / 2;
+        vx = 0;
+        vy = 0;
+    }
+};
+
+Ship ship;
+
+bool btn1 = false, btn2 = false, btn3 = false, btn4 = false;
+
 int main(int argc, char *args[]) {
-    // main loop
-    while (!wnd.handle_keys()) {
-        for (int i = 0; i < 16; i++) {
-            fbuf_rect(&fbuf, 0, 8 * i, 128, 8, fbuf_palette[i]);
-        }
+    // SDL init
+    SDL_Init(SDL_INIT_EVERYTHING);
 
-        // x, y
-        // fbuf_line(&fbuf, 10, 10, 20, 10, fbuf_palette[8]);
-        // fbuf_line(&fbuf, 10, 10, 10, 20, fbuf_palette[11]);
+    window = SDL_CreateWindow("gamer", SDL_WINDOWPOS_UNDEFINED,
+                              SDL_WINDOWPOS_UNDEFINED, W, H,
+                              SDL_WINDOW_SHOWN);
 
-        // fbuf_circ(&fbuf, 40, 40, 10, fbuf_palette[10]);
-
-        // convert from framebuf to display
-        wnd.startDraw();
-        for (int i = 0; i < WH; i += 1) {
-            uint32_t color = convert_color(fbuf.buf[i]);
-            wnd.pixels[i] = color;
-        }
-        wnd.endDraw();
-        frame_count++;
-        SDL_Delay(20);
+    if (window == NULL) {
+        printf("window err. %s", SDL_GetError);
+        return 1;
     }
 
+    screen_surface = SDL_GetWindowSurface(window);
+    format = screen_surface->format;
+    pixels = (uint32_t *)screen_surface->pixels;
+
+    ship = Ship();
+
+    // loop
+    while (running) {
+        // poll for events/keys
+        while (SDL_PollEvent(&event)) {
+            switch (event.type) {
+                case SDL_QUIT:
+                    running = false;
+                    break;
+                case SDL_KEYDOWN:
+                    key_name = SDL_GetKeyName(event.key.keysym.sym);
+                    if (key_name[0] == 'A') {
+                        btn1 = true;
+                    }
+
+                    if (key_name[0] == 'D') {
+                        btn2 = true;
+                    }
+
+                    if (key_name[0] == 'W') {
+                        btn3 = true;
+                    }
+
+                    if (key_name[0] == 'S') {
+                        btn4 = true;
+                    }
+
+                    break;
+                default:
+                    break;
+            }
+        }
+        // check for buttons here for SDL reasons.
+        ship.vx = 0;
+        ship.vy = 0;
+
+        // printf("%s", btn1);
+
+        if (btn1) {
+            ship.vx = -3;
+        }
+
+        if (btn2) {
+            ship.vx = 3;
+        }
+
+        if (btn3) {
+            ship.vy = -3;
+        }
+
+        if (btn4) {
+            ship.vy = 3;
+        }
+
+        ship.x += ship.vx;
+        ship.y += ship.vy;
+
+        btn1 = false;
+        btn2 = false;
+        btn3 = false;
+        btn4 = false;
+
+        fbuf_cls(&fbuf, BLACK);
+        fbuf_blt(&fbuf, ship.x, ship.y, 16, 0, 32, 32);
+
+        // start draw
+        SDL_LockSurface(screen_surface);
+        for (int i = 0; i < WH; i += 1) {
+            uint32_t color = convert_color(fbuf.buf[i]);
+            pixels[i] = color;
+        }
+        // end draw
+        SDL_UnlockSurface(screen_surface);
+        SDL_UpdateWindowSurface(window);
+
+        SDL_Delay(30);
+    }
+
+    // destroy
+    SDL_DestroyWindow(window);
+    SDL_Quit();
     return 0;
 }
