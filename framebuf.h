@@ -43,8 +43,16 @@ typedef struct FrameBuffer {
 
 // method api is inspired from kitao/pyxel
 
+static u32 fbuf_at(u16 x, u16 y);
+
 // Clear screen with color.
 void fbuf_cls(FrameBuffer* fbuf, u16 color);
+
+// writes text at (x,y) with color. no wrapping
+void fbuf_text(FrameBuffer* fbuf, const char* text, u16 x, u16 y, u16 color);
+
+// writes char c at (x,y) with color.
+void fbuf_char(FrameBuffer* fbuf, char c, u16 x, u16 y, u16 color);
 
 // Get the color of the pixel at (x, y).
 u16 fbuf_pget(FrameBuffer* fbuf, u16 x, u16 y);

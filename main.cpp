@@ -129,7 +129,8 @@ int main(int argc, char *args[]) {
         btn4 = false;
 
         fbuf_cls(&fbuf, BLACK);
-        fbuf_blt(&fbuf, ship.x, ship.y, 16, 0, 32, 32);
+        fbuf_text(&fbuf, "Hello world!", 16, 24, fbuf_palette[8]);
+        fbuf_blt(&fbuf, ship.x, ship.y, 16, 0, 16, 16);
 
         // start draw
         SDL_LockSurface(screen_surface);

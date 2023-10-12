@@ -1,0 +1,7 @@
+src/
+.vscode/
+
+sdl2-config
+*.exe
+*.dll
+
