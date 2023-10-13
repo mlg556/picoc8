@@ -4,6 +4,10 @@
 #define H 320
 #define WH 240 * 320
 
+#define WW 120
+#define HH 160
+#define WWHH 120 * 160
+
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
@@ -44,6 +48,8 @@ typedef struct FrameBuffer {
 // method api is inspired from kitao/pyxel
 
 static u32 fbuf_at(u16 x, u16 y);
+
+static u32 spr_at(u16 x, u16 y);
 
 // Clear screen with color.
 void fbuf_cls(FrameBuffer* fbuf, u16 color);

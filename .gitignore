@@ -4,4 +4,5 @@ src/
 sdl2-config
 *.exe
 *.dll
+*.png
 

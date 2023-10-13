@@ -37,8 +37,8 @@ class Ship {
    public:
     int x, y, vx, vy;
     Ship() {
-        x = W / 2;
-        y = H / 2;
+        x = WW / 2;
+        y = HH / 2;
         vx = 0;
         vy = 0;
     }
@@ -129,8 +129,10 @@ int main(int argc, char *args[]) {
         btn4 = false;
 
         fbuf_cls(&fbuf, BLACK);
-        fbuf_text(&fbuf, "Hello world!", 16, 24, fbuf_palette[8]);
-        fbuf_blt(&fbuf, ship.x, ship.y, 16, 0, 16, 16);
+        // fbuf_text(&fbuf, "Hello world!", 16, 24, fbuf_palette[8]);
+        // fbuf_blt(&fbuf, 16, 16, 0, 112, 8, 8);
+        // fbuf_blt(&fbuf, 16 + 8, 16, 8, 112, 8, 8);
+        fbuf_blt(&fbuf, ship.x, ship.y, 8, 0, 8, 8);
 
         // start draw
         SDL_LockSurface(screen_surface);

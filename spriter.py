@@ -2,7 +2,7 @@ import imageio.v3 as iio
 
 im = iio.imread("sprite.png")
 
-W, H = 240, 320
+W, H = 120, 160
 
 with open("sprite.h", "w+") as f:
     f.write("// clang-format off\n")

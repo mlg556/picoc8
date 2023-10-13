@@ -14,8 +14,14 @@
 
 #define ABS(N) ((N < 0) ? (-N) : (N))
 
+// framebuf width is W
 static u32 fbuf_at(u16 x, u16 y) {
     return (y * W + x);
+}
+
+// spritesheet width is WW
+static u32 spr_at(u16 x, u16 y) {
+    return (y * WW + x);
 }
 
 // Clear screen with color.
@@ -160,14 +166,24 @@ void fbuf_circb(FrameBuffer* fbuf, u16 x, u16 y, u16 r, u16 color) {
 }
 
 // Copy the region of size (w, h) from (u, v) of the sprite bank to (x, y). Black is transparent
+// the spritesheet is 120x160, so it's scaled up when blitting to the framebuffer.
 void fbuf_blt(FrameBuffer* fbuf, u16 x, u16 y, u16 u, u16 v, u16 w, u16 h) {
     u16 pix;
 
+    // BAD CODE. this should all be done in pset
+    x = x * 2;
+    y = y * 2;
+
     for (int j = 0; j < h; j++) {
         for (int i = 0; i < w; i++) {
-            pix = sprite0[fbuf_at(u + i, v + j)];
-            if (pix != 0)  // 0 is transparent black
-                fbuf_pset(fbuf, x + i, y + j, fbuf_palette[pix]);
+            pix = sprite0[spr_at(u + i, v + j)];
+            if (pix != 0) {  // 0 is transparent black
+                // paint 4 pixels to upscale
+                fbuf_pset(fbuf, x + (2 * i), y + 2 * j, fbuf_palette[pix]);
+                fbuf_pset(fbuf, x + (2 * i) + 1, y + 2 * j, fbuf_palette[pix]);
+                fbuf_pset(fbuf, x + (2 * i), y + 2 * j + 1, fbuf_palette[pix]);
+                fbuf_pset(fbuf, x + (2 * i) + 1, y + 2 * j + 1, fbuf_palette[pix]);
+            }
         }
     }
 }
@@ -182,26 +198,31 @@ void fbuf_char(FrameBuffer* fbuf, char c, u16 x, u16 y, u16 color) {
         // (0, 0) holds the empty sprite, so we use that for space
         u = 0;
         v = 0;
-    } else if (c > 126) {
-        // write "▯", a special character
+    } else if (c > 127) {
+        // write the DEL character
         u = 64;
         v = 304;
     } else {
-        // the spritesheet is in the ASCII order but in a 15x7 table, starting at (0, 208)
+        // the spritesheet is in the ASCII order but in a 15x7 table, starting at (0, 104)
         // subtract 33 so '!' is 0
         // then find the coordinates from the linear index
         // multiply by cell width/height and add the table starting coordinates
         c = c - 33;
-        u = (c % 15) * 16;
-        v = (c / 15) * 16 + 208;
+        u = (c % 15) * 8;
+        v = (c / 15) * 8 + 104;
     }
 
-    // chars are 16x16 by default
-    for (int j = 0; j < 16; j++) {
-        for (int i = 0; i < 16; i++) {
-            pix = sprite0[fbuf_at(u + i, v + j)];
-            if (pix != 0)  // 0 is transparent black
-                fbuf_pset(fbuf, x + i, y + j, color);
+    // chars are 8x8 by default
+    for (int j = 0; j < 8; j++) {
+        for (int i = 0; i < 8; i++) {
+            pix = sprite0[spr_at(u + i, v + j)];
+            if (pix != 0) {  // 0 is transparent black
+                // paint 4 pixels to upscale
+                fbuf_pset(fbuf, x + (2 * i), y + 2 * j, color);
+                fbuf_pset(fbuf, x + (2 * i) + 1, y + 2 * j, color);
+                fbuf_pset(fbuf, x + (2 * i), y + 2 * j + 1, color);
+                fbuf_pset(fbuf, x + (2 * i) + 1, y + 2 * j + 1, color);
+            }
         }
     }
 }
