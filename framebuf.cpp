@@ -4,6 +4,9 @@
 
 #include "sprite.h"
 
+// font used is "Tom Thumb 4x6 from https://robey.lag.net/2010/01/23/tiny-monospace-font.html by Robey Pointer <robey@lag.net> LICENSE: CC0 or CC-BY 3.0
+// no modifications made, just embedded into a 120x180 png
+
 // it's macro time
 #define swap(x, y)    \
     {                 \
@@ -203,18 +206,18 @@ void fbuf_char(FrameBuffer* fbuf, char c, u16 x, u16 y, u16 color) {
         u = 64;
         v = 304;
     } else {
-        // the spritesheet is in the ASCII order but in a 15x7 table, starting at (0, 104)
+        // the spritesheet is in the ASCII order but in a 30x4 table, starting at (0, 136)
         // subtract 33 so '!' is 0
         // then find the coordinates from the linear index
-        // multiply by cell width/height and add the table starting coordinates
+        // multiply by cell width and add the table starting coordinates
         c = c - 33;
-        u = (c % 15) * 8;
-        v = (c / 15) * 8 + 104;
+        u = (c % 30) * 4;
+        v = (c / 30) * 6 + 136;
     }
 
-    // chars are 8x8 by default
-    for (int j = 0; j < 8; j++) {
-        for (int i = 0; i < 8; i++) {
+    // chars are 4x6
+    for (int j = 0; j < 6; j++) {
+        for (int i = 0; i < 4; i++) {
             pix = sprite0[spr_at(u + i, v + j)];
             if (pix != 0) {  // 0 is transparent black
                 // paint 4 pixels to upscale
@@ -229,6 +232,6 @@ void fbuf_char(FrameBuffer* fbuf, char c, u16 x, u16 y, u16 color) {
 
 void fbuf_text(FrameBuffer* fbuf, const char* text, u16 x, u16 y, u16 color) {
     for (int i = 0; i < strlen(text); i++) {
-        fbuf_char(fbuf, text[i], x + 16 * i, y, color);
+        fbuf_char(fbuf, text[i], x + 8 * i, y, color);
     }
 }

@@ -129,7 +129,7 @@ int main(int argc, char *args[]) {
         btn4 = false;
 
         fbuf_cls(&fbuf, BLACK);
-        // fbuf_text(&fbuf, "Hello world!", 16, 24, fbuf_palette[8]);
+        fbuf_text(&fbuf, "Hello world!", 16, 24, fbuf_palette[8]);
         // fbuf_blt(&fbuf, 16, 16, 0, 112, 8, 8);
         // fbuf_blt(&fbuf, 16 + 8, 16, 8, 112, 8, 8);
         fbuf_blt(&fbuf, ship.x, ship.y, 8, 0, 8, 8);
