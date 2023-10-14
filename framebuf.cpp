@@ -17,34 +17,109 @@
 
 #define ABS(N) ((N < 0) ? (-N) : (N))
 
-// framebuf width is W
-static u32 fbuf_at(u16 x, u16 y) {
-    return (y * W + x);
-}
-
-// spritesheet width is WW
-static u32 spr_at(u16 x, u16 y) {
-    return (y * WW + x);
-}
+// // framebuf width is W
+// static u32 fbuf_at(u16 x, u16 y) {
+//     return (y * W + x);
+// }
 
 // Clear screen with color.
 void fbuf_cls(FrameBuffer* fbuf, u16 color) {
-    for (int i = 0; i < W * H; i++) {
+    for (int i = 0; i < WWHH; i++) {
         fbuf->buf[i] = color;
     }
 }
 
+// Draw a pixel with color at (x, y).
+void fbuf_pset(FrameBuffer* fbuf, u16 x, u16 y, u16 color) {
+    const u16 xx = 2 * x;
+    const u16 yy = 2 * y;
+    // because of upscale, we draw 4 pixels
+
+    _pset(fbuf, xx, yy, color);
+    _pset(fbuf, xx + 1, yy, color);
+    _pset(fbuf, xx, yy + 1, color);
+    _pset(fbuf, xx + 1, yy + 1, color);
+}
+
 // Get the color of the pixel at (x, y).
 u16 fbuf_pget(FrameBuffer* fbuf, u16 x, u16 y) {
-    u32 i = fbuf_at(x, y);
+    const u16 xx = 2 * x;
+    const u16 yy = 2 * y;
+
+    return _pget(fbuf, xx, yy);
+}
+
+// Internal pset. draws an actual single pixel
+void _pset(FrameBuffer* fbuf, u16 x, u16 y, u16 color) {
+    const u32 i = (y * WW + x);
+    if (i < WH * 2 * 2)
+        fbuf->buf[i] = color;
+}
+
+// Internal pget. gets an actual single pixel
+u16 _pget(FrameBuffer* fbuf, u16 x, u16 y) {
+    const u32 i = (y * WW + x);
     return fbuf->buf[i];
 }
 
-// Draw a pixel with color at (x, y).
-void fbuf_pset(FrameBuffer* fbuf, u16 x, u16 y, u16 color) {
-    u32 i = fbuf_at(x, y);
-    if (i <= WH)
-        fbuf->buf[i] = color;
+// Copy the region of size (w, h) from (u, v) of the sprite bank to (x, y). Black is transparent
+// the spritesheet is 120x160, so it's scaled up when blitting to the framebuffer.
+void fbuf_blt(FrameBuffer* fbuf, u16 x, u16 y, u16 u, u16 v, u16 w, u16 h) {
+    u16 pix;
+    u32 idx;
+
+    for (int j = 0; j < h; j++) {
+        for (int i = 0; i < w; i++) {
+            idx = (v + j) * W + (u + i);
+            pix = sprite0[idx];
+            if (pix != 0) {  // 0 is transparent black
+                fbuf_pset(fbuf, x + i, y + j, fbuf_palette[pix]);
+            }
+        }
+    }
+}
+
+// writes char c at (x,y) with color.
+void fbuf_char(FrameBuffer* fbuf, char c, u16 x, u16 y, u16 color) {
+    // it's like blt, but to print a char with arbitrary color
+    // (not just the color in the spritesheet), we must do extra
+
+    u16 u, v, pix;
+    u32 idx;
+    if (c == ' ') {
+        // (0, 0) holds the empty sprite, so we use that for space
+        u = 0;
+        v = 0;
+    } else if (c > 127) {
+        // write the DEL character
+        u = 64;
+        v = 304;
+    } else {
+        // the spritesheet is in the ASCII order but in a 30x4 table, starting at (0, 136)
+        // subtract 33 so '!' is 0
+        // then find the coordinates from the linear index
+        // multiply by cell width and add the table starting coordinates
+        c = c - 33;
+        u = (c % 30) * 4;
+        v = (c / 30) * 6 + 136;
+    }
+
+    // chars are 4x6
+    for (int j = 0; j < 6; j++) {
+        for (int i = 0; i < 4; i++) {
+            idx = (v + j) * W + (u + i);
+            pix = sprite0[idx];
+            if (pix != 0) {  // 0 is transparent black
+                fbuf_pset(fbuf, x + i, y + j, color);
+            }
+        }
+    }
+}
+
+void fbuf_text(FrameBuffer* fbuf, const char* text, u16 x, u16 y, u16 color) {
+    for (int i = 0; i < strlen(text); i++) {
+        fbuf_char(fbuf, text[i], x + 4 * i, y, color);
+    }
 }
 
 // from tinydraw.go and https://gist.github.com/bert/1085538
@@ -165,73 +240,5 @@ void fbuf_circb(FrameBuffer* fbuf, u16 x, u16 y, u16 r, u16 color) {
         fbuf_pset(fbuf, x - y0, y + x0, color);
         fbuf_pset(fbuf, x + y0, y - x0, color);
         fbuf_pset(fbuf, x - y0, y - x0, color);
-    }
-}
-
-// Copy the region of size (w, h) from (u, v) of the sprite bank to (x, y). Black is transparent
-// the spritesheet is 120x160, so it's scaled up when blitting to the framebuffer.
-void fbuf_blt(FrameBuffer* fbuf, u16 x, u16 y, u16 u, u16 v, u16 w, u16 h) {
-    u16 pix;
-
-    // BAD CODE. this should all be done in pset
-    x = x * 2;
-    y = y * 2;
-
-    for (int j = 0; j < h; j++) {
-        for (int i = 0; i < w; i++) {
-            pix = sprite0[spr_at(u + i, v + j)];
-            if (pix != 0) {  // 0 is transparent black
-                // paint 4 pixels to upscale
-                fbuf_pset(fbuf, x + (2 * i), y + 2 * j, fbuf_palette[pix]);
-                fbuf_pset(fbuf, x + (2 * i) + 1, y + 2 * j, fbuf_palette[pix]);
-                fbuf_pset(fbuf, x + (2 * i), y + 2 * j + 1, fbuf_palette[pix]);
-                fbuf_pset(fbuf, x + (2 * i) + 1, y + 2 * j + 1, fbuf_palette[pix]);
-            }
-        }
-    }
-}
-
-// writes char c at (x,y) with color.
-void fbuf_char(FrameBuffer* fbuf, char c, u16 x, u16 y, u16 color) {
-    // it's like blt, but to print a char with arbitrary color
-    // (not just the color in the spritesheet), we must do extra
-
-    u16 u, v, pix;
-    if (c == ' ') {
-        // (0, 0) holds the empty sprite, so we use that for space
-        u = 0;
-        v = 0;
-    } else if (c > 127) {
-        // write the DEL character
-        u = 64;
-        v = 304;
-    } else {
-        // the spritesheet is in the ASCII order but in a 30x4 table, starting at (0, 136)
-        // subtract 33 so '!' is 0
-        // then find the coordinates from the linear index
-        // multiply by cell width and add the table starting coordinates
-        c = c - 33;
-        u = (c % 30) * 4;
-        v = (c / 30) * 6 + 136;
-    }
-
-    // chars are 4x6
-    for (int j = 0; j < 6; j++) {
-        for (int i = 0; i < 4; i++) {
-            pix = sprite0[spr_at(u + i, v + j)];
-            if (pix != 0) {  // 0 is transparent black
-                // paint 4 pixels to upscale
-                fbuf_pset(fbuf, x + (2 * i), y + 2 * j, color);
-                fbuf_pset(fbuf, x + (2 * i) + 1, y + 2 * j, color);
-                fbuf_pset(fbuf, x + (2 * i), y + 2 * j + 1, color);
-                fbuf_pset(fbuf, x + (2 * i) + 1, y + 2 * j + 1, color);
-            }
-        }
-    }
-}
-
-void fbuf_text(FrameBuffer* fbuf, const char* text, u16 x, u16 y, u16 color) {
-    for (int i = 0; i < strlen(text); i++) {
-        fbuf_char(fbuf, text[i], x + 8 * i, y, color);
     }
 }

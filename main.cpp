@@ -8,7 +8,7 @@ using namespace std;
 #include "framebuf.h"
 // #include "sprite.c"
 
-uint16_t buf[WH];
+uint16_t buf[WWHH];
 
 FrameBuffer fbuf = {buf};
 
@@ -37,8 +37,8 @@ class Ship {
    public:
     int x, y, vx, vy;
     Ship() {
-        x = WW / 2;
-        y = HH / 2;
+        x = W / 2;
+        y = H / 2;
         vx = 0;
         vy = 0;
     }
@@ -53,7 +53,7 @@ int main(int argc, char *args[]) {
     SDL_Init(SDL_INIT_EVERYTHING);
 
     window = SDL_CreateWindow("gamer", SDL_WINDOWPOS_UNDEFINED,
-                              SDL_WINDOWPOS_UNDEFINED, W, H,
+                              SDL_WINDOWPOS_UNDEFINED, WW, HH,
                               SDL_WINDOW_SHOWN);
 
     if (window == NULL) {
@@ -129,14 +129,14 @@ int main(int argc, char *args[]) {
         btn4 = false;
 
         fbuf_cls(&fbuf, BLACK);
-        fbuf_text(&fbuf, "Hello world!", 16, 24, fbuf_palette[8]);
-        // fbuf_blt(&fbuf, 16, 16, 0, 112, 8, 8);
-        // fbuf_blt(&fbuf, 16 + 8, 16, 8, 112, 8, 8);
+        // fbuf_blt(&fbuf, 0, 0, 8, 0, 8, 8);
+
+        fbuf_text(&fbuf, "Hello world!", 0, 0, fbuf_palette[8]);
         fbuf_blt(&fbuf, ship.x, ship.y, 8, 0, 8, 8);
 
         // start draw
         SDL_LockSurface(screen_surface);
-        for (int i = 0; i < WH; i += 1) {
+        for (int i = 0; i < WWHH; i += 1) {
             uint32_t color = convert_color(fbuf.buf[i]);
             pixels[i] = color;
         }
